@@ -1,0 +1,89 @@
+const express = require("express");
+const router = express.Router();
+const cors = require("cors");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+require("dotenv").config();
+
+const User = require("../models/user");
+router.use(cors());
+
+var jwtToken = process.env.SECRET_KEY || "random";
+
+router.post("/register", (req, res) => {
+  const userData = {
+    email: req.body.email,
+    password: req.body.password,
+    role: req.body.role,
+  };
+
+  User.findOne({
+    email: req.body.email,
+  })
+    .then((user) => {
+      if (!user) {
+        bcrypt.hash(req.body.password, 10, (err, hash) => {
+          userData.password = hash;
+          User.create(userData)
+            .then((user) => {
+              res.json({ status: user.email + "Registered!" });
+            })
+            .catch((err) => {
+              res.send("error: " + err);
+            });
+        });
+      } else {
+        res.json({ error: "User already exists" });
+      }
+    })
+    .catch((err) => {
+      res.send("error: " + err);
+    });
+});
+
+router.post("/login", (req, res) => {
+  User.findOne({
+    email: req.body.email,
+  })
+    .then((user) => {
+      if (user) {
+        if (bcrypt.compareSync(req.body.password, user.password)) {
+          // Passwords match
+          const payload = {
+            _id: user._id,
+            email: user.email,
+            role: user.role,
+          };
+          let token = jwt.sign(payload, jwtToken, {
+            expiresIn: 1440,
+          });
+          res.send(token);
+        } else {
+          // Passwords don't match
+          res.json({ error: "User does not exist" });
+        }
+      } else {
+        res.json({ error: "User does not exist" });
+      }
+    })
+    .catch((err) => {
+      res.send("error: " + err);
+    });
+});
+
+router.post("/permissions", (req, res) => {
+  if (req.body.role === "Admin") {
+    res.send({
+      accessRedButton: true,
+      accessGreenButton: true,
+    });
+  }
+  if (req.body.role === "Customer") {
+    res.send({
+      accessRedButton: false,
+      accessGreenButton: true,
+    });
+  }
+});
+
+module.exports = router;
