@@ -15,6 +15,7 @@ class Profile extends Component {
 
     this.showButton = this.showButton.bind(this);
     this.addPermission = this.addPermission.bind(this);
+    this.renderButton = this.renderButton.bind(this);
   }
 
   componentDidMount() {
@@ -27,7 +28,7 @@ class Profile extends Component {
     });
 
     axios
-      .get("/users/profile?role=" + decoded.role)
+      .get("http://localhost:5000/users/profile?role=" + decoded.role)
       .then((res) => {
         this.setState({
           users: res.data,
@@ -64,13 +65,38 @@ class Profile extends Component {
 
   addPermission(id) {
     axios
-      .post("/users/permissions", {
+      .post("http://localhost:5000/users/permissions", {
         userid: id,
       })
       .then((res) => {
         console.log(res.data);
         alert("Permission Updated");
+        window.location.reload();
       });
+  }
+
+  renderButton(aR, id) {
+    if (aR === true) {
+      return (
+        <div>
+          <button type="button" className="btn btn-warning" disabled>
+            Already Permitted
+          </button>
+        </div>
+      );
+    } else {
+      return (
+        <div>
+          <button
+            type="button"
+            className="btn btn-danger"
+            onClick={() => this.addPermission(id)}
+          >
+            Add Permission
+          </button>
+        </div>
+      );
+    }
   }
   render() {
     return (
@@ -85,13 +111,7 @@ class Profile extends Component {
                 <div className="row m-2">
                   <p className="col-sm">{user.email}</p>
                   <p className="col-sm">{user.role}</p>
-                  <button
-                    type="button"
-                    className="btn btn-danger"
-                    onClick={() => this.addPermission(user._id)}
-                  >
-                    Add Permission
-                  </button>
+                  {this.renderButton(user.accessR, user._id)}
                 </div>
               );
             })}
