@@ -11,11 +11,24 @@ router.use(cors());
 var jwtToken = process.env.SECRET_KEY || "random";
 
 router.post("/register", (req, res) => {
-  const userData = {
-    email: req.body.email,
-    password: req.body.password,
-    role: req.body.role,
-  };
+  let userData;
+  if (req.body.role === "Admin") {
+    userData = {
+      email: req.body.email,
+      password: req.body.password,
+      role: req.body.role,
+      accessR: true,
+      accessG: true,
+    };
+  } else {
+    userData = {
+      email: req.body.email,
+      password: req.body.password,
+      role: req.body.role,
+      accessR: false,
+      accessG: true,
+    };
+  }
 
   User.findOne({
     email: req.body.email,
@@ -53,6 +66,8 @@ router.post("/login", (req, res) => {
             _id: user._id,
             email: user.email,
             role: user.role,
+            accessRedButton: user.accessR,
+            accessGreenButton: user.accessG,
           };
           let token = jwt.sign(payload, jwtToken, {
             expiresIn: 1440,
@@ -71,18 +86,27 @@ router.post("/login", (req, res) => {
     });
 });
 
-router.post("/permissions", (req, res) => {
-  if (req.body.role === "Admin") {
-    res.send({
-      accessRedButton: true,
-      accessGreenButton: true,
+router.post("/permissions", async (req, res) => {
+  await User.findById(req.body.userid)
+    .then((user) => {
+      user.accessR = true;
+      user.save();
+      res.send("Permission Updated");
+    })
+    .catch((err) => {
+      res.send("error: " + err);
     });
-  }
-  if (req.body.role === "Customer") {
-    res.send({
-      accessRedButton: false,
-      accessGreenButton: true,
-    });
+});
+router.get("/profile", async (req, res) => {
+  const role = req.query.role;
+  if (role === "Admin") {
+    await User.find({ role: "Customer" })
+      .then((user) => {
+        res.send(user);
+      })
+      .catch((err) => res.status(400).json("Error: " + err));
+  } else {
+    res.send([]);
   }
 });
 

@@ -15,6 +15,12 @@ const userSchema = new Schema({
     type: String,
     required: true,
   },
+  accessR: {
+    type: Boolean,
+  },
+  accessG: {
+    type: Boolean,
+  },
 });
 
 const User = mongoose.model("User", userSchema);
