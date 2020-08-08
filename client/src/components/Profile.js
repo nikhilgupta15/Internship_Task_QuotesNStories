@@ -28,7 +28,7 @@ class Profile extends Component {
     });
 
     axios
-      .get("http://localhost:5000/users/profile?role=" + decoded.role)
+      .get("/users/profile?role=" + decoded.role)
       .then((res) => {
         this.setState({
           users: res.data,
@@ -65,7 +65,7 @@ class Profile extends Component {
 
   addPermission(id) {
     axios
-      .post("http://localhost:5000/users/permissions", {
+      .post("/users/permissions", {
         userid: id,
       })
       .then((res) => {
